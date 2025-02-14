@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://github.com/ONEThousandandONE-1001/Jiya/blob/main/Screenshot_2025_0214_135557.jpg?raw=true">
+  <title>BALP | Funny Shooting Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes flash {
+      0%, 100% { filter: none; }
+      50% { filter: brightness(2) saturate(2); }
+    }
+    @keyframes wiggle {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    .character-flash {
+      animation: flash 0.2s;
+    }
+    .wiggle {
+      animation: wiggle 0.5s infinite;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-cover bg-center" 
+      style="background-image: url('https://github.com/ONEThousandandONE-1001/Jiya/blob/main/images%20(1)%20(14).jpeg?raw=true');">
+
+  <div id="game-container" class="relative h-full w-full">
+    <div id="score" class="absolute top-4 left-4 text-yellow-300 text-3xl font-extrabold drop-shadow-lg">Score: 0</div>
+    <div id="timer" class="absolute top-4 right-4 text-red-400 text-3xl font-extrabold drop-shadow-lg">Time: 60s</div>
+    <img id="gun" 
+         src="https://github.com/AkramHossain0/data/blob/main/g.png?raw=true" 
+         alt="Gun" 
+         class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 h-64 object-contain wiggle">
+
+    <div id="game-over" class="hidden absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+      <div class="bg-white p-8 rounded-lg text-center">
+        <h2 class="text-4xl font-bold mb-4">😂 Game Over 😂</h2>
+        <p id="final-score" class="text-2xl mb-4">Your score: 0</p>
+        <p class="text-lg mb-4">Better luck next time, sharpshooter!</p>
+        <button id="restart-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+          Play Again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="gunshot-sound" src="https://github.com/AkramHossain0/bongoboltu/raw/refs/heads/main/gun-shot-1-7069.mp3"></audio>
+
+  <script>
+    const gameContainer = document.getElementById('game-container');
+    const gun = document.getElementById('gun');
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+    const gameOverElement = document.getElementById('game-over');
+    const finalScoreElement = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+    const gunshotSound = document.getElementById('gunshot-sound');
+
+    let score = 0;
+    let timeLeft = 60;
+    let gameInterval;
+    const enemies = [];
+    const numEnemies = 3;
+
+    function createEnemy() {
+      const enemy = document.createElement('img');
+      enemy.src = "https://github.com/ONEThousandandONE-1001/Jiya/blob/main/Screenshot_2025_0214_135557.jpg?raw=true";
+      enemy.className = "absolute w-24 h-24 object-contain wiggle";
+      gameContainer.appendChild(enemy);
+      updateEnemyPosition(enemy);
+      enemies.push(enemy);
+    }
+
+    function updateEnemyPosition(enemy) {
+      const maxX = gameContainer.clientWidth - enemy.clientWidth;
+      const maxY = gameContainer.clientHeight - enemy.clientHeight;
+      enemy.style.left = `${Math.random() * maxX}px`;
+      enemy.style.top = `${Math.random() * maxY}px`;
+    }
+
+    function hitEnemy(enemy) {
+      enemy.classList.add('character-flash');
+      setTimeout(() => enemy.classList.remove('character-flash'), 200);
+
+      gunshotSound.currentTime = 0;
+      gunshotSound.play();
+
+      createBlastEffect(enemy.offsetLeft + enemy.clientWidth / 2, enemy.offsetTop + enemy.clientHeight / 2);
+      updateScore();
+      updateEnemyPosition(enemy);
+    }
+
+    function createBlastEffect(x, y) {
+      const blast = document.createElement('div');
+      blast.className = 'absolute w-8 h-8 bg-pink-500 rounded-full opacity-75';
+      blast.style.left = `${x - 16}px`;
+      blast.style.top = `${y - 16}px`;
+      gameContainer.appendChild(blast);
+
+      setTimeout(() => {
+        gameContainer.removeChild(blast);
+      }, 200);
+    }
+
+    function updateScore() {
+      score++;
+      scoreElement.textContent = `Score: ${score}`;
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerElement.textContent = `Time: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      gameOverElement.classList.remove('hidden');
+      finalScoreElement.textContent = `Your score: ${score}`;
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 60;
+      scoreElement.textContent = 'Score: 0';
+      timerElement.textContent = 'Time: 60s';
+      gameOverElement.classList.add('hidden');
+
+      enemies.forEach(enemy => gameContainer.removeChild(enemy));
+      enemies.length = 0;
+
+      for (let i = 0; i < numEnemies; i++) {
+        createEnemy();
+      }
+
+      gameInterval = setInterval(() => {
+        updateTimer();
+        enemies.forEach(updateEnemyPosition);
+      }, 1000);
+    }
+
+    gameContainer.addEventListener('click', (e) => {
+      const gunRect = gun.getBoundingClientRect();
+      const gunCenterX = gunRect.left + gunRect.width / 2;
+      const gunCenterY = gunRect.top + gunRect.height / 2;
+      createBullet(gunCenterX, gunCenterY, e.clientX, e.clientY);
+    });
+
+    restartBtn.addEventListener('click', startGame);
+
+    startGame();
+  </script>
+</body>
+</html>
